@@ -23,7 +23,8 @@ DEFAULTS = dict(
     http_server_port=8888,
     baud_rate=9600,
     open_interval=5,
-    retry_interval=5,
+    write_retry_interval=5,
+    open_retry_interval=5,
     num_write_retries=5,
     num_serial_open_retries=100,
     transcode=False,
@@ -250,7 +251,8 @@ def run_serial_to_http(
         http_server_port=DEFAULTS['http_server_port'],
         serial_device=DEFAULTS['serial_device'],
         baud_rate=DEFAULTS['baud_rate'],
-        retry_interval=DEFAULTS['write_retry_interval'],
+        open_retry_interval=DEFAULTS['open_retry_interval'],
+        write_retry_interval=DEFAULTS['write_retry_interval'],
         num_write_retries=DEFAULTS['num_write_retries'],
         num_serial_open_retries=DEFAULTS['num_serial_open_retries'],
         http_content_type=DEFAULTS['http_content_type'],
@@ -264,7 +266,8 @@ def run_serial_to_http(
             bind_and_activate=True,
             serial_device=serial_device,
             baud_rate=baud_rate,
-            write_retry_interval=retry_interval,
+            write_retry_interval=write_retry_interval,
+            open_retry_interval=open_retry_interval,
             num_write_retries=num_write_retries,
             num_serial_open_retries=num_serial_open_retries,
             http_content_type=http_content_type,
@@ -282,7 +285,8 @@ def main(*args):
     parser.add_argument('--http-server-port', type=int, default=DEFAULTS['http_server_port'], help='HTTP server port')
     parser.add_argument('--serial-device', type=str, default=DEFAULTS['serial_device'], help='Serial port')
     parser.add_argument('--baud-rate', type=int, default=DEFAULTS['baud_rate'], help='Baud rate')
-    parser.add_argument('--retry-interval', type=int, default=DEFAULTS['write_retry_interval'], help='Retry period in seconds')
+    parser.add_argument('--write-retry-interval', type=int, default=DEFAULTS['write_retry_interval'], help='Retry period in seconds')
+    parser.add_argument('--open-retry-interval', type=int, default=DEFAULTS['open_retry_interval'], help='Retry period in seconds')
     parser.add_argument('--num-write-retries', type=int, default=DEFAULTS['num_write_retries'], help='Number of write retries')
     parser.add_argument('--num-serial-open-retries', type=int, default=DEFAULTS['num_serial_open_retries'], help='Number of serial open retries')
     parser.add_argument('--http-content-type', type=str, default=DEFAULTS['http_content_type'], help='HTTP content type')
@@ -297,7 +301,8 @@ def main(*args):
         http_server_port=parsed_args.http_server_port,
         serial_device=parsed_args.serial_device,
         baud_rate=parsed_args.baud_rate,
-        retry_interval=parsed_args.retry_interval,
+        open_retry_interval=parsed_args.open_retry_interval,
+        write_retry_interval=parsed_args.write_retry_interval,
         num_write_retries=parsed_args.num_write_retries,
         num_serial_open_retries=parsed_args.num_serial_open_retries,
         http_content_type=parsed_args.http_content_type,
