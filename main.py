@@ -48,7 +48,7 @@ DEFAULT_ERROR_MESSAGE = "%(message)s"
 DEFAULT_ERROR_CONTENT_TYPE = "text/plain;charset=utf-8"
 
 
-class SerialToHTTPServer(http.server.HTTPServer):
+class SerialOverHTTPServer(http.server.HTTPServer):
 
     def __init__(
             self,
@@ -69,7 +69,7 @@ class SerialToHTTPServer(http.server.HTTPServer):
             tokens=DEFAULTS['tokens'],
             open_during_init=True
     ):
-        serial_to_http_handler_with_args = partial(
+        serial_over_http_handler_with_args = partial(
             SerialToHttpHandler,
             write_retry_interval=write_retry_interval,
             num_write_retries=num_write_retries,
@@ -82,7 +82,7 @@ class SerialToHTTPServer(http.server.HTTPServer):
         )
         super().__init__(
             server_address=server_address,
-            RequestHandlerClass=serial_to_http_handler_with_args,
+            RequestHandlerClass=serial_over_http_handler_with_args,
             bind_and_activate=bind_and_activate)
 
         self.logger = logging.getLogger(server_logger_name)
@@ -126,7 +126,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
     error_message_format = DEFAULT_ERROR_MESSAGE
     error_content_type = DEFAULT_ERROR_CONTENT_TYPE
 
-    server: SerialToHTTPServer
+    server: SerialOverHTTPServer
 
     def __init__(
             self,
@@ -246,7 +246,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
                     time.sleep(self.write_retry_interval)
 
 
-def run_serial_to_http(
+def run_serial_over_http(
         http_server_address=DEFAULTS['http_server_address'],
         http_server_port=DEFAULTS['http_server_port'],
         serial_device=DEFAULTS['serial_device'],
@@ -261,7 +261,7 @@ def run_serial_to_http(
 ):
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-    with SerialToHTTPServer(
+    with SerialOverHTTPServer(
             server_address=(http_server_address, http_server_port),
             bind_and_activate=True,
             serial_device=serial_device,
@@ -296,7 +296,7 @@ def main(*args):
 
     parsed_args = parser.parse_args(args)
 
-    run_serial_to_http(
+    run_serial_over_http(
         http_server_address=parsed_args.http_server_address,
         http_server_port=parsed_args.http_server_port,
         serial_device=parsed_args.serial_device,
