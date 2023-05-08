@@ -15,29 +15,8 @@ import socketserver
 import time
 import sys
 
-# import safe_termination
-
-DEFAULTS = dict(
-    serial_device='COM6',
-    http_server_address='127.0.0.1',
-    http_server_port=8888,
-    baud_rate=9600,
-    open_interval=5,
-    write_retry_interval=5,
-    open_retry_interval=5,
-    num_write_retries=5,
-    num_serial_open_retries=100,
-    transcode=False,
-    http_content_type='application/octet-stream',
-    # http_content_type='text/plain',
-    serial_encoding='ISO-8859-1',
-    http_encoding='ISO-8859-1',
-    open_during_init=True,
-    server_logger_name='SerialToHttpServer',
-    handler_logger_name='SerialToHttpHandler',
-    token_variable='token',
-    tokens=tuple()
-)
+import config_args_parser
+from app_defaults import DEFAULTS
 
 DEFAULT_ERROR_MESSAGE = "%(message)s"
 # %(code)d
@@ -228,15 +207,31 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
             self.send_error(500, 'Failed to open serial connection')
         else:
             post_data = self._get_post_data()
+            self.logger.debug('Received post data: %s', str(post_data))
             retries = 0
             while True:
                 try:
-                    self._serial_write(post_data)
-                    serial_data = self._serial_readline()
-                    self._respond(serial_data)
+                    try:
+                        self._serial_write(post_data)
+                    except Exception as e:
+                        self.logger.error(f"Failed to write to serial port: [{e.__class__.__name__}]{e}")
+                        raise
+                    try:
+                        serial_data = self._serial_readline()
+                        self.logger.debug('Reading data from serial port: %s', str(serial_data))
+                    except Exception as e:
+                        self.logger.error(f"Failed to read from serial port: [{e.__class__.__name__}]{e}")
+                        raise
+                    try:
+                        self._respond(serial_data)
+                    except BrokenPipeError as e:
+                        self.logger.error(f"Failed send HTTP response -> stopping: [{e.__class__.__name__}]{e}")
+                    except Exception as e:
+                        self.logger.error(f"Failed send HTTP response: [{e.__class__.__name__}]{e}")
+                        raise
+                    # operation succeeded
                     break
                 except Exception as e:
-                    self.logger.error(f"Failed to write to serial port: [{e.__class__.__name__}]{e}")
                     retries += 1
                     if retries > self.num_write_retries:
                         self.logger.error(f"Too many attempts  (maximum: {self.num_write_retries}")
@@ -292,22 +287,33 @@ def main(*args):
     parser.add_argument('--http-content-type', type=str, default=DEFAULTS['http_content_type'], help='HTTP content type')
     parser.add_argument('--serial-encoding', type=str, default=DEFAULTS['serial_encoding'], help='Serial encoding')
     parser.add_argument('--http-encoding', type=str, default=DEFAULTS['http_encoding'], help='HTTP encoding')
-    parser.add_argument('--tokens', type=str, nargs='+', default=DEFAULTS['http_encoding'], help='HTTP encoding')
+    parser.add_argument('--log-file', type=str, default=DEFAULTS['log_file'], help='Log file')
+    parser.add_argument('--log-level', type=int, default=DEFAULTS['log_level'], help='Log level')
+    parser.add_argument('--tokens', type=str, nargs='+', default=DEFAULTS['tokens'], help='List of tokens to be used for authentication')
+    config_args_parser.add_config_arguments(parser)
 
     parsed_args = parser.parse_args(args)
+    config = config_args_parser.parse(parsed_args)
+
+    logger = logging.getLogger()
+    logger.setLevel(config['log_level'])
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler = logging.FileHandler(config['log_file']) if config['log_file'] else logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     run_serial_over_http(
-        http_server_address=parsed_args.http_server_address,
-        http_server_port=parsed_args.http_server_port,
-        serial_device=parsed_args.serial_device,
-        baud_rate=parsed_args.baud_rate,
-        open_retry_interval=parsed_args.open_retry_interval,
-        write_retry_interval=parsed_args.write_retry_interval,
-        num_write_retries=parsed_args.num_write_retries,
-        num_serial_open_retries=parsed_args.num_serial_open_retries,
-        http_content_type=parsed_args.http_content_type,
-        serial_encoding=parsed_args.serial_encoding,
-        http_encoding=parsed_args.http_encoding,
+        http_server_address=config['http_server_address'],
+        http_server_port=config['http_server_port'],
+        serial_device=config['serial_device'],
+        baud_rate=config['baud_rate'],
+        open_retry_interval=config['open_retry_interval'],
+        write_retry_interval=config['write_retry_interval'],
+        num_write_retries=config['num_write_retries'],
+        num_serial_open_retries=config['num_serial_open_retries'],
+        http_content_type=config['http_content_type'],
+        serial_encoding=config['serial_encoding'],
+        http_encoding=config['http_encoding'],
     )
 
     return 0
