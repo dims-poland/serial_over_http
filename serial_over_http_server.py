@@ -253,9 +253,8 @@ def run_serial_over_http(
         http_content_type=DEFAULTS['http_content_type'],
         serial_encoding=DEFAULTS['serial_encoding'],
         http_encoding=DEFAULTS['http_encoding'],
+        tokens=DEFAULTS['tokens']
 ):
-    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
-
     with SerialOverHTTPServer(
             server_address=(http_server_address, http_server_port),
             bind_and_activate=True,
@@ -268,7 +267,8 @@ def run_serial_over_http(
             http_content_type=http_content_type,
             serial_encoding=serial_encoding,
             http_encoding=http_encoding,
-            open_during_init=True
+            open_during_init=True,
+            tokens=tokens
     ) as httpd:
         logging.info(f"Serving on port {http_server_port}")
         httpd.serve_forever()
@@ -276,31 +276,30 @@ def run_serial_over_http(
 
 def main(*args):
     parser = argparse.ArgumentParser(description='Run serial to HTTP')
-    parser.add_argument('--http-server-address', type=str, default=DEFAULTS['http_server_address'], help='HTTP server address')
-    parser.add_argument('--http-server-port', type=int, default=DEFAULTS['http_server_port'], help='HTTP server port')
-    parser.add_argument('--serial-device', type=str, default=DEFAULTS['serial_device'], help='Serial port')
-    parser.add_argument('--baud-rate', type=int, default=DEFAULTS['baud_rate'], help='Baud rate')
-    parser.add_argument('--write-retry-interval', type=int, default=DEFAULTS['write_retry_interval'], help='Retry period in seconds')
-    parser.add_argument('--open-retry-interval', type=int, default=DEFAULTS['open_retry_interval'], help='Retry period in seconds')
-    parser.add_argument('--num-write-retries', type=int, default=DEFAULTS['num_write_retries'], help='Number of write retries')
-    parser.add_argument('--num-serial-open-retries', type=int, default=DEFAULTS['num_serial_open_retries'], help='Number of serial open retries')
-    parser.add_argument('--http-content-type', type=str, default=DEFAULTS['http_content_type'], help='HTTP content type')
-    parser.add_argument('--serial-encoding', type=str, default=DEFAULTS['serial_encoding'], help='Serial encoding')
-    parser.add_argument('--http-encoding', type=str, default=DEFAULTS['http_encoding'], help='HTTP encoding')
-    parser.add_argument('--log-file', type=str, default=DEFAULTS['log_file'], help='Log file')
-    parser.add_argument('--log-level', type=int, default=DEFAULTS['log_level'], help='Log level')
-    parser.add_argument('--tokens', type=str, nargs='+', default=DEFAULTS['tokens'], help='List of tokens to be used for authentication')
+    parser.add_argument('--http-server-address', type=str, help='HTTP server address')
+    parser.add_argument('--http-server-port', type=int, help='HTTP server port')
+    parser.add_argument('--serial-device', type=str, help='Serial port')
+    parser.add_argument('--baud-rate', type=int, help='Baud rate')
+    parser.add_argument('--write-retry-interval', type=int, help='Retry period in seconds')
+    parser.add_argument('--open-retry-interval', type=int, help='Retry period in seconds')
+    parser.add_argument('--num-write-retries', type=int, help='Number of write retries')
+    parser.add_argument('--num-serial-open-retries', type=int, help='Number of serial open retries')
+    parser.add_argument('--http-content-type', type=str, help='HTTP content type')
+    parser.add_argument('--serial-encoding', type=str, help='Serial encoding')
+    parser.add_argument('--http-encoding', type=str, help='HTTP encoding')
+    parser.add_argument('--log-file', type=str, help='Log file')
+    parser.add_argument('--log-level', type=int, help='Log level')
+    parser.add_argument('--tokens', type=str, nargs='+', help='List of tokens to be used for authentication')
     config_args_parser.add_config_arguments(parser)
 
     parsed_args = parser.parse_args(args)
     config = config_args_parser.parse(parsed_args)
 
-    logger = logging.getLogger()
-    logger.setLevel(config['log_level'])
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler = logging.FileHandler(config['log_file']) if config['log_file'] else logging.StreamHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logging.basicConfig(
+        level=config['log_level'],
+        handlers=[logging.StreamHandler(sys.stderr) if config['log_file'] is None else logging.FileHandler(config['log_file'])],
+        format='%(asctime)s [%(levelname)s] %(name)s %(message)s'
+    )
 
     run_serial_over_http(
         http_server_address=config['http_server_address'],
@@ -314,6 +313,7 @@ def main(*args):
         http_content_type=config['http_content_type'],
         serial_encoding=config['serial_encoding'],
         http_encoding=config['http_encoding'],
+        tokens=config['tokens']
     )
 
     return 0
