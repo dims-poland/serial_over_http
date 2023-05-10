@@ -1,0 +1,4 @@
+venv
+.delete
+.idea
+__pycache__
