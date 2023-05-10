@@ -212,17 +212,20 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
             while True:
                 try:
                     try:
+                        self.logger.debug('Writing data to serial port: %s', str(post_data))
                         self._serial_write(post_data)
                     except Exception as e:
                         self.logger.error(f"Failed to write to serial port: [{e.__class__.__name__}]{e}")
                         raise
                     try:
+                        self.logger.debug('Waiting for data from serial port')
                         serial_data = self._serial_readline()
                         self.logger.debug('Reading data from serial port: %s', str(serial_data))
                     except Exception as e:
                         self.logger.error(f"Failed to read from serial port: [{e.__class__.__name__}]{e}")
                         raise
                     try:
+                        self.logger.debug('Sending HTTP response')
                         self._respond(serial_data)
                     except BrokenPipeError as e:
                         self.logger.error(f"Failed send HTTP response -> stopping: [{e.__class__.__name__}]{e}")
