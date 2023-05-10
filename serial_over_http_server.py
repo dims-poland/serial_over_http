@@ -299,7 +299,7 @@ def main(*args):
     parser = argparse.ArgumentParser(description='Run serial to HTTP')
     parser.add_argument('--http-server-address', type=str, help='HTTP server address')
     parser.add_argument('--http-server-port', type=int, help='HTTP server port')
-    parser.add_argument('--pool-interval', type=int, help='HTTP server poll interval')
+    parser.add_argument('--pool-interval', type=float, help='HTTP server poll interval')
     parser.add_argument('--serial-device', type=str, help='Serial port')
     parser.add_argument('--serial-timeout', type=str, help='Serial timeout')
     parser.add_argument('--baud-rate', type=int, help='Baud rate')
