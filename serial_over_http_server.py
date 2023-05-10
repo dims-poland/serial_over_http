@@ -187,7 +187,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
         # if self.tokens:
         parsed = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsed.query)
-        if self.token_variable in query and str(query[self.token_variable]).strip() in self.tokens:
+        if self.token_variable in query and str(query[self.token_variable][0]).strip() in self.tokens:
             return True
         return False
 
