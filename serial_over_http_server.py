@@ -301,6 +301,9 @@ def main(*args):
         format='%(asctime)s [%(levelname)s] %(name)s %(message)s'
     )
 
+    tokens = config['tokens']
+    tokens = [tokens] if isinstance(tokens, str) else tokens
+
     run_serial_over_http(
         http_server_address=config['http_server_address'],
         http_server_port=config['http_server_port'],
@@ -313,7 +316,7 @@ def main(*args):
         http_content_type=config['http_content_type'],
         serial_encoding=config['serial_encoding'],
         http_encoding=config['http_encoding'],
-        tokens=config['tokens']
+        tokens=tokens
     )
 
     return 0
