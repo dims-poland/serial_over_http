@@ -272,7 +272,8 @@ def run_serial_over_http(
         http_content_type=DEFAULTS['http_content_type'],
         serial_encoding=DEFAULTS['serial_encoding'],
         http_encoding=DEFAULTS['http_encoding'],
-        tokens=DEFAULTS['tokens']
+        tokens=DEFAULTS['tokens'],
+        pool_interval=DEFAULTS['pool_interval']
 ):
     with SerialOverHTTPServer(
             server_address=(http_server_address, http_server_port),
@@ -291,13 +292,14 @@ def run_serial_over_http(
             tokens=tokens
     ) as httpd:
         logging.info(f"Serving on port {http_server_port}")
-        httpd.serve_forever()
+        httpd.serve_forever(poll_interval=pool_interval)
 
 
 def main(*args):
     parser = argparse.ArgumentParser(description='Run serial to HTTP')
     parser.add_argument('--http-server-address', type=str, help='HTTP server address')
     parser.add_argument('--http-server-port', type=int, help='HTTP server port')
+    parser.add_argument('--pool-interval', type=int, help='HTTP server poll interval')
     parser.add_argument('--serial-device', type=str, help='Serial port')
     parser.add_argument('--serial-timeout', type=str, help='Serial timeout')
     parser.add_argument('--baud-rate', type=int, help='Baud rate')
@@ -342,7 +344,8 @@ def main(*args):
         http_content_type=config['http_content_type'],
         serial_encoding=config['serial_encoding'],
         http_encoding=config['http_encoding'],
-        tokens=tokens
+        tokens=tokens,
+        pool_interval=config['pool_interval']
     )
 
     return 0

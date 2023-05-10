@@ -29,5 +29,6 @@ DEFAULTS = dict(
     tokens=tuple(),
     log_level=logging.INFO,
     log_file=None,
-    config_file_name=None
+    config_file_name=None,
+    pool_interval=0.5,
 )
