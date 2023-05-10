@@ -297,7 +297,11 @@ def main(*args):
 
     logging.basicConfig(
         level=config['log_level'],
-        handlers=[logging.StreamHandler(sys.stderr) if config['log_file'] is None else logging.FileHandler(config['log_file'])],
+        handlers=[
+            logging.StreamHandler(sys.stderr)
+                if not config['log_file'] or config['log_file'] == '-'
+            else logging.FileHandler(config['log_file'])
+        ],
         format='%(asctime)s [%(levelname)s] %(name)s %(message)s'
     )
 
