@@ -35,6 +35,7 @@ class SerialOverHTTPServer(http.server.HTTPServer):
             bind_and_activate=True,
             serial_device=DEFAULTS['serial_device'],
             baud_rate=DEFAULTS['baud_rate'],
+            serial_timeout=DEFAULTS['serial_timeout'],
             num_serial_open_retries=DEFAULTS['num_serial_open_retries'],
             open_retry_interval=DEFAULTS['open_retry_interval'],
             write_retry_interval=DEFAULTS['write_retry_interval'],
@@ -67,6 +68,7 @@ class SerialOverHTTPServer(http.server.HTTPServer):
         self.logger = logging.getLogger(server_logger_name)
         self.serial_device = serial_device
         self.baud_rate = baud_rate
+        self.serial_timeout = serial_timeout
         self.serial_conn = None
         self.num_serial_open_retries = num_serial_open_retries
         self.open_retry_interval = open_retry_interval
@@ -84,7 +86,14 @@ class SerialOverHTTPServer(http.server.HTTPServer):
             retries = 0
             while retries < self.num_serial_open_retries or self.num_serial_open_retries < 0:
                 try:
-                    self.serial_conn = serial.Serial(self.serial_device, self.baud_rate)
+                    self.serial_conn = serial.Serial(
+                        port=self.serial_device,
+                        baudrate=self.baud_rate,
+                        # parity=serial.PARITY_NONE,
+                        # bytesize=serial.EIGHTBITS,
+                        # stopbits=serial.STOPBITS_ONE,
+                        timeout=self.serial_timeout
+                    )
                     break
                 except Exception as e:
                     self.logger.error(
@@ -248,6 +257,7 @@ def run_serial_over_http(
         http_server_address=DEFAULTS['http_server_address'],
         http_server_port=DEFAULTS['http_server_port'],
         serial_device=DEFAULTS['serial_device'],
+        serial_timeout=DEFAULTS['serial_timeout'],
         baud_rate=DEFAULTS['baud_rate'],
         open_retry_interval=DEFAULTS['open_retry_interval'],
         write_retry_interval=DEFAULTS['write_retry_interval'],
@@ -262,6 +272,7 @@ def run_serial_over_http(
             server_address=(http_server_address, http_server_port),
             bind_and_activate=True,
             serial_device=serial_device,
+            serial_timeout=serial_timeout,
             baud_rate=baud_rate,
             write_retry_interval=write_retry_interval,
             open_retry_interval=open_retry_interval,
@@ -282,6 +293,7 @@ def main(*args):
     parser.add_argument('--http-server-address', type=str, help='HTTP server address')
     parser.add_argument('--http-server-port', type=int, help='HTTP server port')
     parser.add_argument('--serial-device', type=str, help='Serial port')
+    parser.add_argument('--serial-timeout', type=str, help='Serial timeout')
     parser.add_argument('--baud-rate', type=int, help='Baud rate')
     parser.add_argument('--write-retry-interval', type=int, help='Retry period in seconds')
     parser.add_argument('--open-retry-interval', type=int, help='Retry period in seconds')
@@ -315,6 +327,7 @@ def main(*args):
         http_server_address=config['http_server_address'],
         http_server_port=config['http_server_port'],
         serial_device=config['serial_device'],
+        serial_timeout=config['serial_timeout'],
         baud_rate=config['baud_rate'],
         open_retry_interval=config['open_retry_interval'],
         write_retry_interval=config['write_retry_interval'],
