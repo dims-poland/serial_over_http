@@ -36,6 +36,8 @@ class SerialOverHTTPServer(http.server.HTTPServer):
             serial_device=DEFAULTS['serial_device'],
             baud_rate=DEFAULTS['baud_rate'],
             serial_timeout=DEFAULTS['serial_timeout'],
+            serial_write_timeout=DEFAULTS['serial_write_timeout'],
+            serial_inter_byte_timeout=DEFAULTS['serial_inter_byte_timeout'],
             num_serial_open_retries=DEFAULTS['num_serial_open_retries'],
             open_retry_interval=DEFAULTS['open_retry_interval'],
             write_retry_interval=DEFAULTS['write_retry_interval'],
@@ -69,6 +71,8 @@ class SerialOverHTTPServer(http.server.HTTPServer):
         self.serial_device = serial_device
         self.baud_rate = baud_rate
         self.serial_timeout = serial_timeout
+        self.serial_write_timeout = serial_write_timeout
+        self.serial_inter_byte_timeout = serial_inter_byte_timeout
         self.serial_conn = None
         self.num_serial_open_retries = num_serial_open_retries
         self.open_retry_interval = open_retry_interval
@@ -92,7 +96,9 @@ class SerialOverHTTPServer(http.server.HTTPServer):
                         # parity=serial.PARITY_NONE,
                         # bytesize=serial.EIGHTBITS,
                         # stopbits=serial.STOPBITS_ONE,
-                        timeout=self.serial_timeout
+                        timeout=self.serial_timeout,
+                        write_timeout=self.serial_write_timeout,
+                        inter_byte_timeout=self.serial_inter_byte_timeout,
                     )
                     break
                 except Exception as e:

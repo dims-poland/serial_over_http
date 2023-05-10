@@ -6,7 +6,9 @@ VERSION = '0.0.1'
 
 DEFAULTS = dict(
     serial_device='COM6',
-    serial_timeout=1,
+    serial_timeout=1,  # in PySerial the default is None
+    serial_write_timeout=None,
+    serial_inter_byte_timeout=None,
     http_server_address='127.0.0.1',
     http_server_port=8888,
     baud_rate=9600,
