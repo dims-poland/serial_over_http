@@ -31,4 +31,5 @@ DEFAULTS = dict(
     log_file=None,
     config_file_name=None,
     pool_interval=0.5,
+    read_size_variable='size',
 )

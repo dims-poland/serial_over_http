@@ -134,6 +134,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
             transcode=DEFAULTS['transcode'],
             tokens=DEFAULTS['tokens'],
             token_variable=DEFAULTS['token_variable'],
+            read_size_variable=DEFAULTS['read_size_variable'],
             **kwargs):
         self.logger = logging.getLogger(logger_name)
         self.write_retry_interval = write_retry_interval
@@ -144,6 +145,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
         self.transcode = transcode
         self.tokens = tokens
         self.token_variable = token_variable
+        self.read_size_variable = read_size_variable
 
         super().__init__(*args, **kwargs)
 
@@ -192,6 +194,14 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
             data = data.decode(self.serial_encoding)
         return data
 
+    def _serial_read(self, size=1) -> typing.Union[str, bytes]:
+        # bytes is decoded
+        # str   is encoded
+        data = self.server.serial_conn.read(size)
+        if self.transcode:
+            data = data.decode(self.serial_encoding)
+        return data
+
     def _serial_write(self, data: typing.Union[str, bytes]) -> None:
         data = self._transcode(data, self.serial_encoding)  #
         self.server.serial_conn.write(data)
@@ -206,13 +216,28 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
             return True
         return False
 
+    def _get_read_size(self):
+        parsed = urllib.parse.urlparse(self.path)
+        query = urllib.parse.parse_qs(parsed.query)
+        if self.read_size_variable in query:
+            return int(query[self.read_size_variable][0])
+        return None
+
+    def _serial_read_data(self):
+        read_size = self._get_read_size()
+        if read_size is None:
+            data = self._serial_readline()
+        else:
+            data = self._serial_read(read_size)
+        return data
+
     def do_GET(self):
         if not self._check_token():
             self.send_error(400, 'Invalid token')
         elif not self.server.open_serial_conn():
             self.send_error(500, 'Failed to open serial connection')
         else:
-            data = self._serial_readline()
+            data = self._serial_read_data()
             self._respond(data)
 
     def do_POST(self):
@@ -234,7 +259,7 @@ class SerialToHttpHandler(http.server.BaseHTTPRequestHandler):
                         raise
                     try:
                         self.logger.debug('Waiting for data from serial port')
-                        serial_data = self._serial_readline()
+                        serial_data = self._serial_read_data()
                         self.logger.debug('Reading data from serial port: %s', str(serial_data))
                     except Exception as e:
                         self.logger.error(f"Failed to read from serial port: [{e.__class__.__name__}]{e}")
